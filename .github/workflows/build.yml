@@ -14,15 +14,20 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
+          sed -i 's/^#.*ftp/http/' /etc/slackpkg/mirrors
           slackpkg update gpg
           slackpkg update
+
           yes | slackpkg install \
-            git gcc make \
-            meson ninja \
-            pkg-config \
-            libdrm \
-            libpciaccess \
-            python3
+          git \
+          gcc \
+          make \
+          meson \
+          ninja \
+          pkg-config \
+          libdrm \
+          libpciaccess \
+          python3
 
       - name: Clone igt-gpu-tools
         run: |
