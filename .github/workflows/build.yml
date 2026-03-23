@@ -1,0 +1,65 @@
+name: Build xe_gpu_top (Unraid)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: vbatts/slackware:15.0
+
+    steps:
+      - name: Install dependencies
+        run: |
+          slackpkg update gpg
+          slackpkg update
+          yes | slackpkg install \
+            git gcc make \
+            meson ninja \
+            pkg-config \
+            libdrm \
+            libpciaccess \
+            python3
+
+      - name: Clone igt-gpu-tools
+        run: |
+          git clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git
+
+      - name: Build xe_gpu_top
+        run: |
+          cd igt-gpu-tools
+          meson setup build -Dbuildtype=release
+          ninja -C build
+
+      - name: Package
+        run: |
+          mkdir -p package/usr/local/bin
+          cp igt-gpu-tools/build/tools/xe_gpu_top package/usr/local/bin/
+
+          mkdir -p package/install
+          cat > package/install/slack-desc << 'EOF'
+          xe_gpu_top: xe_gpu_top
+          xe_gpu_top:
+          xe_gpu_top: Intel Xe GPU monitoring tool
+          xe_gpu_top:
+          xe_gpu_top:
+          xe_gpu_top:
+          xe_gpu_top:
+          xe_gpu_top:
+          xe_gpu_top:
+          xe_gpu_top:
+          EOF
+
+          cd package
+          makepkg -l y -c n ../xe_gpu_top.txz
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: xe_gpu_top.txz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
